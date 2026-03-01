@@ -1,4 +1,4 @@
-// 1. Firebase Configuration (Wahi jo aapne console se nikaala)
+// 1. Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyD8qNYHMhbH2CyAu8DCEJr3AcBz2MQbhx0",
     authDomain: "notelist-dfae8.firebaseapp.com",
@@ -14,43 +14,34 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// 3. Google Login Function (Ensure 'g' is small)
+// 3. Auth State Handler (Restore & Sync Logic)
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        // Login hone par UI update aur Cloud data restore
+        document.getElementById('authSection').innerHTML = `
+            <span style="color:white; margin-right:10px;">Hi, ${user.displayName.split(' ')[0]}</span>
+            <button onclick="auth.signOut().then(()=>location.reload())" class="btn" style="width:auto; padding:5px 10px; background:#e74c3c; display:inline-block;">Logout</button>
+        `;
+    }
+    // Data Load Karein
+    loadNotes();
+    loadTodos();
+    if(document.getElementById('calendar').classList.contains('active-screen')) renderCalendar();
+});
+
+// 4. Google Login Function
 function googleLogin() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider)
         .then((result) => {
             alert("Namaste " + result.user.displayName + "!");
-            // Login hone ke baad automatic refresh taaki cloud data dikhne lage
+            // Data sync trigger karne ke liye reload
             location.reload(); 
         })
         .catch((error) => {
             console.error("Login Error: ", error);
-            alert("Login fail ho gaya. Console check karein.");
+            alert("Login fail ho gaya. Domain settings check karein.");
         });
-}
-
-// 4. Auth State Handler (Ye login/logout detect karega)
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        // Agar user login hai, toh uska naam button ki jagah dikhao
-        document.getElementById('authSection').innerHTML = `
-            <span style="color:white; margin-right:10px;">Hi, ${user.displayName.split(' ')[0]}</span>
-            <button onclick="auth.signOut().then(()=>location.reload())" class="btn" style="width:auto; padding:5px 10px; background:#e74c3c;">Logout</button>
-        `;
-    }
-    // Har bar data load karein
-    loadNotes();
-    loadTodos();
-});
-// Google Login Function
-function googleLogin() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).then((result) => {
-        alert("Namaste " + result.user.displayName + "!");
-        // Refresh karne ki bajaye cloud se load ho jayega state change handler se
-    }).catch((error) => {
-        console.error("Login Error: ", error);
-    });
 }
 
 // --- Navigation ---
@@ -62,7 +53,7 @@ function openScreen(screenId, btn) {
     if(screenId === 'calendar') renderCalendar();
 }
 
-// --- Notepad Logic (Cloud Sync) ---
+// --- Notepad Logic (Cloud Backup & Restore) ---
 function setNoteColor(color) {
     document.getElementById('noteText').style.backgroundColor = color;
 }
@@ -84,12 +75,15 @@ async function saveNote() {
     };
 
     if (user) {
+        // Cloud Backup
         await db.collection("users").doc(user.uid).collection("notes").add(note);
-        alert("Note Cloud par save ho gaya!");
+        alert("Note Cloud Sync ho gaya! ✅");
     } else {
+        // Local Save
         let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
         notes.unshift(note);
         localStorage.setItem('notes_data', JSON.stringify(notes));
+        alert("Note Local save hua (Backup ke liye Login karein)");
     }
     
     document.getElementById('noteTitle').value = "";
@@ -103,9 +97,11 @@ async function loadNotes() {
     let notes = [];
 
     if (user) {
+        // Cloud Restore
         const snapshot = await db.collection("users").doc(user.uid).collection("notes").orderBy("timestamp", "desc").get();
         notes = snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
     } else {
+        // Local Load
         notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
     }
 
@@ -113,7 +109,7 @@ async function loadNotes() {
         <div class="history-item" style="background: ${n.color}">
             <button class="del-btn" onclick="deleteNote('${user ? n.id : i}')">×</button>
             <h4>${n.title}</h4>
-            <small>${n.date}</small>
+            <small>${n.date} ${user ? '☁️' : '💾'}</small>
             <p>${n.text}</p>
         </div>
     `).join('');
@@ -131,7 +127,7 @@ async function deleteNote(id) {
     loadNotes();
 }
 
-// --- Checklist Logic ---
+// --- Checklist Logic (Cloud Sync) ---
 async function addTodo() {
     const input = document.getElementById('todoInput');
     const user = auth.currentUser;
@@ -183,13 +179,6 @@ async function deleteTodo(id) {
 }
 
 // --- Calendar Logic ---
-let currentNavDate = new Date();
-
-function changeMonth(val) {
-    currentNavDate.setMonth(currentNavDate.getMonth() + val);
-    renderCalendar();
-}
-
 async function renderCalendar() {
     const grid = document.getElementById('calGrid');
     grid.querySelectorAll('.cal-date').forEach(el => el.remove());
@@ -230,10 +219,9 @@ async function addEvent() {
     const title = document.getElementById('eventTitle').value;
     const date = document.getElementById('eventDate').value;
     const user = auth.currentUser;
-    if(!title || !date) return alert("Event details bharein!");
+    if(!title || !date) return alert("Details bharein!");
 
     const eventData = { title, date };
-
     if (user) {
         await db.collection("users").doc(user.uid).collection("events").add(eventData);
     } else {
@@ -241,9 +229,7 @@ async function addEvent() {
         events.push(eventData);
         localStorage.setItem('cal_events', JSON.stringify(events));
     }
-    
-    document.getElementById('eventTitle').value = "";
-    alert("Event Save ho gaya!");
+    alert("Event Saved!");
     renderCalendar();
 }
 
@@ -265,11 +251,8 @@ async function showEvent(dateStr) {
     }
 }
 
-// Initial Run
 window.onload = () => {
     loadNotes();
     loadTodos();
     renderCalendar();
 };
-
-
