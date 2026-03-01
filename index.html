@@ -1,22 +1,78 @@
-<div id="calendar" class="screen">
-    <div class="card">
-        <div class="cal-header">
-            <button class="btn-nav" onclick="changeMonth(-1)">❮</button>
-            <h2 id="monthDisplay">Month</h2>
-            <button class="btn-nav" onclick="changeMonth(1)">❯</button>
-        </div>
-        <div id="yearDisplay" style="text-align:center; font-weight:bold; color:var(--primary); margin-bottom:10px;"></div>
-        <div class="cal-grid" id="calGrid">
-            <div class="cal-day-name">SUN</div><div class="cal-day-name">MON</div>
-            <div class="cal-day-name">TUE</div><div class="cal-day-name">WED</div>
-            <div class="cal-day-name">THU</div><div class="cal-day-name">FRI</div>
-            <div class="cal-day-name">SAT</div>
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bhati Pro Tools - All in One</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="auth-header">
+        <div class="logo">BhatiTools</div>
+        <div class="login-btns">
+            <button class="google-btn" onclick="alert('Google Login setup next step mein karenge!')">Google Login</button>
+            <button class="zoho-btn" onclick="alert('Zoho Login setup next step mein karenge!')">Zoho Login</button>
         </div>
     </div>
-    <div class="card">
-        <h3>Add Event</h3>
-        <input type="text" id="eventTitle" placeholder="Event Name...">
-        <input type="date" id="eventDate"> <button class="btn" onclick="addEvent()">Save Event</button>
-        <div id="eventStatus" style="margin-top:10px; font-size:14px; color:var(--primary);"></div>
+
+    <nav class="nav-tabs">
+        <button onclick="openScreen('notepad', this)" class="active">📝 Notepad</button>
+        <button onclick="openScreen('checklist', this)">✅ Checklist</button>
+        <button onclick="openScreen('calendar', this)">📅 Calendar</button>
+    </nav>
+
+    <div id="notepad" class="screen active-screen">
+        <div class="card">
+            <h2>Naya Note Likhein</h2>
+            <div class="theme-dots">
+                <span>Bg Color:</span>
+                <div class="dot" style="background: #fff;" onclick="setNoteColor('#fff')"></div>
+                <div class="dot" style="background: #fff9c4;" onclick="setNoteColor('#fff9c4')"></div>
+                <div class="dot" style="background: #e1f5fe;" onclick="setNoteColor('#e1f5fe')"></div>
+                <div class="dot" style="background: #f1f8e9;" onclick="setNoteColor('#f1f8e9')"></div>
+            </div>
+            <input type="text" id="noteTitle" placeholder="Heading (Title) yahan likhein...">
+            <textarea id="noteText" placeholder="Apna message yahan likhein..."></textarea>
+            <button class="btn" onclick="saveNote()">Save Note</button>
+        </div>
+        <div id="notesHistory"></div>
     </div>
-</div>
+
+    <div id="checklist" class="screen">
+        <div class="card">
+            <h2>My Tasks</h2>
+            <div class="input-group">
+                <input type="text" id="todoInput" placeholder="Naya kaam add karein...">
+                <button class="btn" style="width: 80px;" onclick="addTodo()">Add</button>
+            </div>
+            <div id="todoList"></div>
+        </div>
+    </div>
+
+    <div id="calendar" class="screen">
+        <div class="card">
+            <div class="cal-header">
+                <button class="nav-btn" onclick="changeMonth(-1)">❮</button>
+                <h2 id="monthDisplay">Month</h2>
+                <button class="nav-btn" onclick="changeMonth(1)">❯</button>
+            </div>
+            <div id="yearDisplay" style="text-align: center; font-weight: bold; color: var(--primary); margin-bottom: 10px;"></div>
+            <div class="cal-grid" id="calGrid">
+                <div class="cal-day-name">SUN</div><div class="cal-day-name">MON</div>
+                <div class="cal-day-name">TUE</div><div class="cal-day-name">WED</div>
+                <div class="cal-day-name">THU</div><div class="cal-day-name">FRI</div>
+                <div class="cal-day-name">SAT</div>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Add Event</h3>
+            <input type="text" id="eventTitle" placeholder="Event Name...">
+            <input type="date" id="eventDate">
+            <button class="btn" onclick="addEvent()">Save Event</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
