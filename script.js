@@ -1,3 +1,30 @@
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyD8qNYHMhbH2CyAu8DCEJr3AcBz2MQbhx0",
+    authDomain: "notelist-dfae8.firebaseapp.com",
+    projectId: "notelist-dfae8",
+    storageBucket: "notelist-dfae8.appspot.com",
+    messagingSenderId: "503268461988",
+    appId: "1:503268461988:web:ae9609d73f8b76bef28531",
+    measurementId: "G-LX2148M3EF"
+};
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Google Login Function
+function googleLogin() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).then((result) => {
+        alert("Namaste " + result.user.displayName + "!");
+        location.reload(); 
+    }).catch((error) => {
+        console.error("Login Error: ", error);
+    });
+}
+
+
 let currentNavDate = new Date(); // Mahina track karne ke liye
 
 // --- Navigation ---
@@ -149,3 +176,4 @@ window.onload = () => {
     loadTodos();
     renderCalendar();
 };
+
