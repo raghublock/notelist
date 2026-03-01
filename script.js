@@ -1,4 +1,4 @@
-// 1. Firebase Configuration (Aapka Diya Hua)
+// 1. Firebase Configuration (Wahi jo aapne console se nikaala)
 const firebaseConfig = {
     apiKey: "AIzaSyD8qNYHMhbH2CyAu8DCEJr3AcBz2MQbhx0",
     authDomain: "notelist-dfae8.firebaseapp.com",
@@ -9,18 +9,38 @@ const firebaseConfig = {
     measurementId: "G-LX2148M3EF"
 };
 
+// 2. Initialize Firebase (Compat Mode)
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Login hone par UI update karne ke liye
+// 3. Google Login Function (Ensure 'g' is small)
+function googleLogin() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+        .then((result) => {
+            alert("Namaste " + result.user.displayName + "!");
+            // Login hone ke baad automatic refresh taaki cloud data dikhne lage
+            location.reload(); 
+        })
+        .catch((error) => {
+            console.error("Login Error: ", error);
+            alert("Login fail ho gaya. Console check karein.");
+        });
+}
+
+// 4. Auth State Handler (Ye login/logout detect karega)
 auth.onAuthStateChanged((user) => {
     if (user) {
-        document.getElementById('userProfile').innerHTML = `<span>Hi, ${user.displayName.split(' ')[0]}</span> <button onclick="auth.signOut().then(()=>location.reload())" style="margin-left:10px; font-size:12px;">Logout</button>`;
+        // Agar user login hai, toh uska naam button ki jagah dikhao
+        document.getElementById('authSection').innerHTML = `
+            <span style="color:white; margin-right:10px;">Hi, ${user.displayName.split(' ')[0]}</span>
+            <button onclick="auth.signOut().then(()=>location.reload())" class="btn" style="width:auto; padding:5px 10px; background:#e74c3c;">Logout</button>
+        `;
     }
+    // Har bar data load karein
     loadNotes();
     loadTodos();
-    renderCalendar();
 });
 // Google Login Function
 function googleLogin() {
@@ -251,4 +271,5 @@ window.onload = () => {
     loadTodos();
     renderCalendar();
 };
+
 
