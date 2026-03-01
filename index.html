@@ -4,27 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bhati Pro Tools - All in One</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-    <head>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-<link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="auth-header">
         <div class="logo">BhatiTools</div>
-        <div class="login-btns">
-            <button class="google-btn" onclick="GoogleLogin()">Google Login</button>
+        <div class="login-btns" id="authSection">
+            <button class="google-btn" onclick="googleLogin()">Google Login</button>
             <button class="zoho-btn" onclick="alert('Zoho Login setup next step mein karenge!')">Zoho Login</button>
         </div>
     </div>
+
     <nav class="nav-tabs">
         <button onclick="openScreen('notepad', this)" class="active">📝 Notepad</button>
         <button onclick="openScreen('checklist', this)">✅ Checklist</button>
         <button onclick="openScreen('calendar', this)">📅 Calendar</button>
     </nav>
+
     <div id="notepad" class="screen active-screen">
         <div class="card">
             <h2>Naya Note Likhein</h2>
@@ -41,6 +42,7 @@
         </div>
         <div id="notesHistory"></div>
     </div>
+
     <div id="checklist" class="screen">
         <div class="card">
             <h2>My Tasks</h2>
@@ -62,7 +64,7 @@
             <div id="yearDisplay" style="text-align: center; font-weight: bold; color: var(--primary); margin-bottom: 10px;"></div>
             <div class="cal-grid" id="calGrid">
                 <div class="cal-day-name">SUN</div><div class="cal-day-name">MON</div>
-                <div class="cal-day-name">TUE</div><div class="cal-day-name">WED</div>
+                <div class="cal-day-name">TUE</div><div class="cal-day-name) WED"></div>
                 <div class="cal-day-name">THU</div><div class="cal-day-name">FRI</div>
                 <div class="cal-day-name">SAT</div>
             </div>
@@ -78,6 +80,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
-
-
