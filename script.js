@@ -1,4 +1,4 @@
-// Firebase Configuration
+// 1. Firebase Configuration (Aapka Diya Hua)
 const firebaseConfig = {
     apiKey: "AIzaSyD8qNYHMhbH2CyAu8DCEJr3AcBz2MQbhx0",
     authDomain: "notelist-dfae8.firebaseapp.com",
@@ -8,24 +8,30 @@ const firebaseConfig = {
     appId: "1:503268461988:web:ae9609d73f8b76bef28531",
     measurementId: "G-LX2148M3EF"
 };
+
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+
+// --- Auth State Change Check ---
+// Jab login status badle, tab data refresh karein
+auth.onAuthStateChanged((user) => {
+    loadNotes();
+    loadTodos();
+    if(document.getElementById('calendar').classList.contains('active-screen')) renderCalendar();
+});
 
 // Google Login Function
 function googleLogin() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider).then((result) => {
         alert("Namaste " + result.user.displayName + "!");
-        location.reload(); 
+        // Refresh karne ki bajaye cloud se load ho jayega state change handler se
     }).catch((error) => {
         console.error("Login Error: ", error);
     });
 }
-
-
-let currentNavDate = new Date(); // Mahina track karne ke liye
 
 // --- Navigation ---
 function openScreen(screenId, btn) {
@@ -36,33 +42,56 @@ function openScreen(screenId, btn) {
     if(screenId === 'calendar') renderCalendar();
 }
 
-// --- Notepad Logic ---
+// --- Notepad Logic (Cloud Sync) ---
 function setNoteColor(color) {
     document.getElementById('noteText').style.backgroundColor = color;
 }
 
-function saveNote() {
+async function saveNote() {
     const title = document.getElementById('noteTitle').value;
     const text = document.getElementById('noteText').value;
     const color = document.getElementById('noteText').style.backgroundColor || '#fff';
+    const user = auth.currentUser;
+
     if(!title || !text) return alert("Heading aur content bharein!");
 
-    const note = { title, text, date: new Date().toLocaleString(), color };
-    let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
-    notes.unshift(note);
-    localStorage.setItem('notes_data', JSON.stringify(notes));
+    const note = { 
+        title, 
+        text, 
+        date: new Date().toLocaleString(), 
+        color,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (user) {
+        await db.collection("users").doc(user.uid).collection("notes").add(note);
+        alert("Note Cloud par save ho gaya!");
+    } else {
+        let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
+        notes.unshift(note);
+        localStorage.setItem('notes_data', JSON.stringify(notes));
+    }
     
     document.getElementById('noteTitle').value = "";
     document.getElementById('noteText').value = "";
     loadNotes();
 }
 
-function loadNotes() {
+async function loadNotes() {
     const container = document.getElementById('notesHistory');
-    let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
+    const user = auth.currentUser;
+    let notes = [];
+
+    if (user) {
+        const snapshot = await db.collection("users").doc(user.uid).collection("notes").orderBy("timestamp", "desc").get();
+        notes = snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
+    } else {
+        notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
+    }
+
     container.innerHTML = notes.map((n, i) => `
         <div class="history-item" style="background: ${n.color}">
-            <button class="del-btn" onclick="deleteNote(${i})">×</button>
+            <button class="del-btn" onclick="deleteNote('${user ? n.id : i}')">×</button>
             <h4>${n.title}</h4>
             <small>${n.date}</small>
             <p>${n.text}</p>
@@ -70,54 +99,84 @@ function loadNotes() {
     `).join('');
 }
 
-function deleteNote(i) {
-    let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
-    notes.splice(i, 1);
-    localStorage.setItem('notes_data', JSON.stringify(notes));
+async function deleteNote(id) {
+    const user = auth.currentUser;
+    if (user) {
+        await db.collection("users").doc(user.uid).collection("notes").doc(id).delete();
+    } else {
+        let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
+        notes.splice(id, 1);
+        localStorage.setItem('notes_data', JSON.stringify(notes));
+    }
     loadNotes();
 }
 
 // --- Checklist Logic ---
-function addTodo() {
+async function addTodo() {
     const input = document.getElementById('todoInput');
+    const user = auth.currentUser;
     if(!input.value) return;
-    let todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
-    todos.push({ text: input.value, done: false });
-    localStorage.setItem('todos_data', JSON.stringify(todos));
+
+    const task = { text: input.value, done: false, date: new Date().toISOString() };
+
+    if (user) {
+        await db.collection("users").doc(user.uid).collection("todos").add(task);
+    } else {
+        let todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
+        todos.push(task);
+        localStorage.setItem('todos_data', JSON.stringify(todos));
+    }
     input.value = "";
     loadTodos();
 }
 
-function loadTodos() {
+async function loadTodos() {
     const container = document.getElementById('todoList');
-    let todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
+    const user = auth.currentUser;
+    let todos = [];
+
+    if (user) {
+        const snapshot = await db.collection("users").doc(user.uid).collection("todos").get();
+        todos = snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
+    } else {
+        todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
+    }
+
     container.innerHTML = todos.map((t, i) => `
         <div class="todo-item">
             <span>${t.text}</span>
-            <button onclick="deleteTodo(${i})" style="color:red; border:none; background:none; cursor:pointer;">Delete</button>
+            <button onclick="deleteTodo('${user ? t.id : i}')" style="color:red; border:none; background:none; cursor:pointer;">Delete</button>
         </div>
     `).join('');
 }
 
-function deleteTodo(i) {
-    let todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
-    todos.splice(i, 1);
-    localStorage.setItem('todos_data', JSON.stringify(todos));
+async function deleteTodo(id) {
+    const user = auth.currentUser;
+    if (user) {
+        await db.collection("users").doc(user.uid).collection("todos").doc(id).delete();
+    } else {
+        let todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
+        todos.splice(id, 1);
+        localStorage.setItem('todos_data', JSON.stringify(todos));
+    }
     loadTodos();
 }
 
-// --- Calendar Logic (Advanced) ---
+// --- Calendar Logic ---
+let currentNavDate = new Date();
+
 function changeMonth(val) {
     currentNavDate.setMonth(currentNavDate.getMonth() + val);
     renderCalendar();
 }
 
-function renderCalendar() {
+async function renderCalendar() {
     const grid = document.getElementById('calGrid');
     grid.querySelectorAll('.cal-date').forEach(el => el.remove());
 
     const year = currentNavDate.getFullYear();
     const month = currentNavDate.getMonth();
+    const user = auth.currentUser;
 
     document.getElementById('monthDisplay').innerText = currentNavDate.toLocaleString('default', { month: 'long' });
     document.getElementById('yearDisplay').innerText = year;
@@ -125,8 +184,13 @@ function renderCalendar() {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     
-    // Events fetch karein
-    const events = JSON.parse(localStorage.getItem('cal_events') || "[]");
+    let events = [];
+    if (user) {
+        const snapshot = await db.collection("users").doc(user.uid).collection("events").get();
+        events = snapshot.docs.map(doc => doc.data());
+    } else {
+        events = JSON.parse(localStorage.getItem('cal_events') || "[]");
+    }
 
     for (let i = 0; i < firstDay; i++) {
         grid.innerHTML += `<div class="cal-date" style="background:transparent; cursor:default;"></div>`;
@@ -136,44 +200,54 @@ function renderCalendar() {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const hasEvent = events.some(e => e.date === dateStr);
         const isToday = (d === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()) ? 'today' : '';
-        
         const dot = hasEvent ? `<div class="event-dot"></div>` : '';
         
-        grid.innerHTML += `
-            <div class="cal-date ${isToday}" onclick="showEvent('${dateStr}')">
-                ${d} ${dot}
-            </div>`;
+        grid.innerHTML += `<div class="cal-date ${isToday}" onclick="showEvent('${dateStr}')">${d} ${dot}</div>`;
     }
 }
 
-function addEvent() {
+async function addEvent() {
     const title = document.getElementById('eventTitle').value;
     const date = document.getElementById('eventDate').value;
+    const user = auth.currentUser;
     if(!title || !date) return alert("Event details bharein!");
 
-    let events = JSON.parse(localStorage.getItem('cal_events') || "[]");
-    events.push({ title, date });
-    localStorage.setItem('cal_events', JSON.stringify(events));
+    const eventData = { title, date };
+
+    if (user) {
+        await db.collection("users").doc(user.uid).collection("events").add(eventData);
+    } else {
+        let events = JSON.parse(localStorage.getItem('cal_events') || "[]");
+        events.push(eventData);
+        localStorage.setItem('cal_events', JSON.stringify(events));
+    }
     
     document.getElementById('eventTitle').value = "";
     alert("Event Save ho gaya!");
     renderCalendar();
 }
 
-function showEvent(dateStr) {
-    const events = JSON.parse(localStorage.getItem('cal_events') || "[]");
-    const dayEvents = events.filter(e => e.date === dateStr);
-    if(dayEvents.length > 0) {
-        alert(`Events on ${dateStr}:\n` + dayEvents.map(e => "- " + e.title).join("\n"));
+async function showEvent(dateStr) {
+    const user = auth.currentUser;
+    let events = [];
+    if (user) {
+        const snapshot = await db.collection("users").doc(user.uid).collection("events").where("date", "==", dateStr).get();
+        events = snapshot.docs.map(doc => doc.data());
+    } else {
+        const allEvents = JSON.parse(localStorage.getItem('cal_events') || "[]");
+        events = allEvents.filter(e => e.date === dateStr);
+    }
+
+    if(events.length > 0) {
+        alert(`Events on ${dateStr}:\n` + events.map(e => "- " + e.title).join("\n"));
     } else {
         alert("Is din koi event nahi hai.");
     }
 }
 
-// On Page Load
+// Initial Run
 window.onload = () => {
     loadNotes();
     loadTodos();
     renderCalendar();
 };
-
