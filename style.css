@@ -1,0 +1,11 @@
+#calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 7 days a week */
+    gap: 5px;
+    text-align: center;
+}
+.today {
+    background: #ffeb3b;
+    border-radius: 50%;
+    font-weight: bold;
+}
