@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div class="auth-header">
         <div class="logo">BhatiTools</div>
         <div class="login-btns">
@@ -15,13 +14,11 @@
             <button class="zoho-btn" onclick="alert('Zoho Login setup next step mein karenge!')">Zoho Login</button>
         </div>
     </div>
-
     <nav class="nav-tabs">
         <button onclick="openScreen('notepad', this)" class="active">📝 Notepad</button>
         <button onclick="openScreen('checklist', this)">✅ Checklist</button>
         <button onclick="openScreen('calendar', this)">📅 Calendar</button>
     </nav>
-
     <div id="notepad" class="screen active-screen">
         <div class="card">
             <h2>Naya Note Likhein</h2>
@@ -38,7 +35,6 @@
         </div>
         <div id="notesHistory"></div>
     </div>
-
     <div id="checklist" class="screen">
         <div class="card">
             <h2>My Tasks</h2>
@@ -76,3 +72,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
