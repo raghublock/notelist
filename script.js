@@ -9,19 +9,19 @@ const firebaseConfig = {
     measurementId: "G-LX2148M3EF"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// --- Auth State Change Check ---
-// Jab login status badle, tab data refresh karein
+// Login hone par UI update karne ke liye
 auth.onAuthStateChanged((user) => {
+    if (user) {
+        document.getElementById('userProfile').innerHTML = `<span>Hi, ${user.displayName.split(' ')[0]}</span> <button onclick="auth.signOut().then(()=>location.reload())" style="margin-left:10px; font-size:12px;">Logout</button>`;
+    }
     loadNotes();
     loadTodos();
-    if(document.getElementById('calendar').classList.contains('active-screen')) renderCalendar();
+    renderCalendar();
 });
-
 // Google Login Function
 function googleLogin() {
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -251,3 +251,4 @@ window.onload = () => {
     loadTodos();
     renderCalendar();
 };
+
