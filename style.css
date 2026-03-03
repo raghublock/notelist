@@ -1,6 +1,6 @@
 /* 1. MODERN CSS RESET & FOUNDATIONS */
 *, *::before, *::after {
-    box-sizing: border-box; /* Normalizes the box model [3, 14] */
+    box-sizing: border-box; 
 }
 
 :root {
@@ -13,12 +13,12 @@
     --text-main: #212121;
     --border-color: #ddd;
     --shadow: 0 4px 15px rgba(0,0,0,0.1);
-    --line-color: #e0e0e0; /* For paper effect */
+    --line-color: #e0e0e0; 
 }
 
 /* 2. THEMES - LIGHT BROWN & LIGHT PINK  */
 [data-theme="light-brown"] {
-    --bg: #f7efe6; /* Terracotta Petal base */
+    --bg: #f7efe6; 
     --primary: #6a3f2b;
     --primary-hover: #b05a3c;
     --text-main: #3a2a24;
@@ -28,7 +28,7 @@
 }
 
 [data-theme="light-pink"] {
-    --bg: #fce4ec; /* Sakura Pink base */
+    --bg: #fce4ec; 
     --primary: #880e4f;
     --primary-hover: #c2185b;
     --text-main: #2f201b;
@@ -38,7 +38,7 @@
 }
 
 body {
-    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; /* Professional stack [15, 16] */
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; 
     background-color: var(--bg);
     margin: 0;
     color: var(--text-main);
@@ -46,7 +46,7 @@ body {
     transition: background-color 0.3s ease;
 }
 
-/* 3. AUTH & NAVIGATION [17, 18, 19] */
+/* 3. AUTH & NAVIGATION */
 .auth-header {
     display: flex;
     justify-content: space-between;
@@ -86,7 +86,7 @@ body {
     border-bottom: 4px solid var(--primary);
 }
 
-/* 4. CARDS & LAYOUT [20, 11] */
+/* 4. CARDS & LAYOUT */
 .screen {
     display: none;
     padding: 30px 20px;
@@ -108,11 +108,11 @@ body {
     border-radius: 16px;
     box-shadow: var(--shadow);
     margin-bottom: 25px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Lift effect [12] */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; 
 }
 
 .card:hover {
-    transform: translateY(-5px); /* Interaction Pop [11, 12] */
+    transform: translateY(-5px); 
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
 
@@ -121,10 +121,10 @@ h2 {
     font-weight: 700;
     border-left: 6px solid var(--primary);
     padding-left: 15px;
-    font-size: clamp(1.2rem, 1.1rem + 0.5vw, 1.5rem); /* Fluid font [21] */
+    font-size: clamp(1.2rem, 1.1rem + 0.5vw, 1.5rem); 
 }
 
-/* 5. LINED PAPER EDITOR [8, 10] */
+/* 5. LINED PAPER EDITOR */
 textarea {
     width: 100%;
     height: 250px;
@@ -133,7 +133,7 @@ textarea {
     padding: 15px 20px;
     font-size: 17px;
     background-image: linear-gradient(var(--line-color) 1px, transparent 1px);
-    background-size: 100% 2rem; /* Matches line-height [8] */
+    background-size: 100% 2rem; 
     line-height: 2rem;
     resize: none;
     background-attachment: local;
@@ -145,6 +145,7 @@ input[type="text"] {
     border: 2px solid transparent;
     background: #f8f9fa;
     transition: border-color 0.3s;
+    width: 100%; /* Fix input size */
 }
 
 input:focus, textarea:focus {
@@ -173,18 +174,18 @@ input:focus, textarea:focus {
     filter: brightness(1.1);
 }
 
-input[type="checkbox"] { accent-color: var(--primary); } /* Custom brand ticks [3, 22] */
+input[type="checkbox"] { accent-color: var(--primary); } 
 
-/* 7. CALENDAR GRID [18, 19] */
+/* 7. CALENDAR GRID */
 .cal-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 2D control [17, 19] */
+    grid-template-columns: repeat(7, 1fr); 
     gap: 8px;
     text-align: center;
 }
 
 .cal-date {
-    aspect-ratio: 1 / 1; /* Perfectly square days [19] */
+    aspect-ratio: 1 / 1; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -196,7 +197,7 @@ input[type="checkbox"] { accent-color: var(--primary); } /* Custom brand ticks [
 .cal-date:hover { background: var(--bg); }
 .today { background: var(--primary)!important; color: white; font-weight: bold; }
 
-/* 8. VIEWS (NOTEPAD LISTS) */
+/* 8. VIEWS (NOTEPAD LISTS) - COLORNOTE STYLE */
 .history-item {
     background: var(--white);
     border-left: 5px solid var(--primary);
@@ -205,7 +206,40 @@ input[type="checkbox"] { accent-color: var(--primary); } /* Custom brand ticks [
     border-radius: 12px;
     position: relative;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    cursor: pointer; /* Clickable hand icon */
+    transition: all 0.3s ease;
 }
+
+/* Default state: Sirf 3 line dikhengi */
+.history-item p {
+    display: -webkit-box;
+    -webkit-line-clamp: 3; 
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+}
+
+/* Expanded state: Click karne par poora note dikhega */
+.history-item.expanded p {
+    display: block; 
+}
+
+/* Visual cue ki note par click kar sakte hain */
+.history-item::after {
+    content: "Tap to read...";
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+    opacity: 0.7;
+    display: block;
+    margin-top: 8px;
+}
+
+.history-item.expanded::after {
+    display: none;
+}
+
 /* --- APP THEMES & NOTE COLOR DOTS --- */
 .app-themes { display: flex; gap: 10px; margin-right: 20px;}
 .theme-dot { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.3); }
@@ -213,9 +247,29 @@ input[type="checkbox"] { accent-color: var(--primary); } /* Custom brand ticks [
 .dot { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid var(--border-color); transition: transform 0.2s; }
 .dot:hover { transform: scale(1.1); }
 
-/* --- GRID, LIST & LARGE VIEWS --- */
-.grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+/* --- GRID, LIST & LARGE VIEWS RE-DESIGNED --- */
+.grid-view { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Chote cards ke liye */
+    gap: 15px; 
+    align-items: start; 
+}
+.grid-view .history-item { 
+    padding: 15px; 
+    min-height: 140px; 
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+}
+.grid-view .history-item h4 {
+    white-space: nowrap; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+}
+
 .list-view { display: flex; flex-direction: column; gap: 15px; }
+
 .large-view { display: flex; flex-direction: column; gap: 25px; }
 .large-view .history-item { padding: 35px; }
 .large-view h4 { font-size: 1.5rem; }
@@ -230,7 +284,7 @@ input[type="checkbox"] { accent-color: var(--primary); } /* Custom brand ticks [
     background: var(--white);
     border: 1px solid var(--border-color);
     padding: 8px 18px;
-    border-radius: 20px; /* Gol buttons */
+    border-radius: 20px; 
     cursor: pointer;
     font-weight: 600;
     color: var(--text-main);
@@ -245,7 +299,7 @@ input[type="checkbox"] { accent-color: var(--primary); } /* Custom brand ticks [
 
 /* --- GOOGLE LOGIN BUTTON --- */
 .google-btn {
-    background: #4285F4; /* Google Blue Color */
+    background: #4285F4; 
     color: white;
     border: none;
     padding: 10px 20px;
@@ -260,7 +314,7 @@ input[type="checkbox"] { accent-color: var(--primary); } /* Custom brand ticks [
     transform: translateY(-2px);
 }
 
-/* --- CALENDAR HEADER FIX (Buttons aamne-saamne) --- */
+/* --- CALENDAR HEADER FIX --- */
 .cal-header {
     display: flex;
     justify-content: space-between;
@@ -287,39 +341,18 @@ input[type="checkbox"] { accent-color: var(--primary); } /* Custom brand ticks [
     color: white;
 }
 
-/* --- COMPACT NOTES (ColorNote Style) --- */
-.history-item {
-    cursor: pointer; /* Clickable hand icon aayega */
-    transition: all 0.3s ease;
+/* --- CHECKLIST TODO ITEM DESIGN --- */
+.todo-item {
+    display: flex; 
+    align-items: center; 
+    margin: 10px 0; 
+    padding: 12px; 
+    background: #f9f9f9; 
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-left: 4px solid var(--primary);
+    transition: transform 0.2s ease;
 }
-
-/* Default state: Sirf 3 line dikhengi */
-.history-item p {
-    display: -webkit-box;
-    -webkit-line-clamp: 3; /* Sirf 3 lines dikhane ke liye */
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 5px;
+.todo-item:hover {
+    transform: translateX(5px);
 }
-
-/* Expanded state: Click karne par poora note dikhega */
-.history-item.expanded p {
-    display: block; 
-}
-
-/* Visual cue ki note par click kar sakte hain */
-.history-item::after {
-    content: "Tap to read...";
-    font-size: 11px;
-    color: #666;
-    font-style: italic;
-    opacity: 0.7;
-}
-
-/* Jab khul jaye toh 'Tap to read' hide kar do */
-.history-item.expanded::after {
-    display: none;
-}
-
-
