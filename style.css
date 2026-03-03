@@ -287,4 +287,39 @@ input[type="checkbox"] { accent-color: var(--primary); } /* Custom brand ticks [
     color: white;
 }
 
+/* --- COMPACT NOTES (ColorNote Style) --- */
+.history-item {
+    cursor: pointer; /* Clickable hand icon aayega */
+    transition: all 0.3s ease;
+}
+
+/* Default state: Sirf 3 line dikhengi */
+.history-item p {
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Sirf 3 lines dikhane ke liye */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+}
+
+/* Expanded state: Click karne par poora note dikhega */
+.history-item.expanded p {
+    display: block; 
+}
+
+/* Visual cue ki note par click kar sakte hain */
+.history-item::after {
+    content: "Tap to read...";
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* Jab khul jaye toh 'Tap to read' hide kar do */
+.history-item.expanded::after {
+    display: none;
+}
+
 
