@@ -14,6 +14,20 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// --- 🛠️ SAFE PARSE FUNCTION (Corrupted Data auto-fix karega) ---
+function safeGetLocal(key) {
+    try {
+        let data = localStorage.getItem(key);
+        if (!data || data === "") return [];
+        let parsed = JSON.parse(data);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        console.warn(`Local data for ${key} was corrupted. Resetting...`);
+        localStorage.setItem(key, "[]");
+        return [];
+    }
+}
+
 // 3. Theme & View Management Logic 
 function setTheme(themeName) {
     document.body.setAttribute('data-theme', themeName);
@@ -80,7 +94,7 @@ async function saveNote() {
     if (user) {
         await db.collection("users").doc(user.uid).collection("notes").add(note);
     } else {
-        let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
+        let notes = safeGetLocal('notes_data');
         notes.unshift(note);
         localStorage.setItem('notes_data', JSON.stringify(notes));
     }
@@ -101,7 +115,7 @@ async function loadNotes() {
         const snapshot = await db.collection("users").doc(user.uid).collection("notes").orderBy("timestamp", "desc").get();
         notes = snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
     } else {
-        notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
+        notes = safeGetLocal('notes_data');
     }
 
     container.innerHTML = notes.map((n, i) => `
@@ -120,7 +134,7 @@ async function deleteNote(id) {
         if (user) {
             await db.collection("users").doc(user.uid).collection("notes").doc(id).delete();
         } else {
-            let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
+            let notes = safeGetLocal('notes_data');
             notes.splice(id, 1);
             localStorage.setItem('notes_data', JSON.stringify(notes));
         }
@@ -141,7 +155,7 @@ async function addTodo() {
             task, done: false, timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
     } else {
-        let todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
+        let todos = safeGetLocal('todos_data');
         todos.push({ task, done: false });
         localStorage.setItem('todos_data', JSON.stringify(todos));
     }
@@ -160,7 +174,7 @@ async function loadTodos() {
         const snap = await db.collection("users").doc(user.uid).collection("todos").orderBy("timestamp").get();
         todos = snap.docs.map(doc => ({...doc.data(), id: doc.id}));
     } else {
-        todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
+        todos = safeGetLocal('todos_data');
     }
 
     list.innerHTML = todos.map((t, i) => `
@@ -176,7 +190,7 @@ async function toggleTodo(id, state) {
     if(user) {
         await db.collection("users").doc(user.uid).collection("todos").doc(id).update({done: state});
     } else {
-        let todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
+        let todos = safeGetLocal('todos_data');
         todos[id].done = state;
         localStorage.setItem('todos_data', JSON.stringify(todos));
     }
@@ -207,7 +221,7 @@ async function renderCalendar() {
         const snap = await db.collection("users").doc(auth.currentUser.uid).collection("events").get();
         events = snap.docs.map(doc => doc.data().date);
     } else {
-        let localEvents = JSON.parse(localStorage.getItem('events_data') || "[]");
+        let localEvents = safeGetLocal('events_data');
         events = localEvents.map(e => e.date);
     }
 
@@ -243,7 +257,7 @@ async function addEvent(dateStr) {
         await db.collection("users").doc(auth.currentUser.uid).collection("events").add({ title, date: dateStr });
         alert("Event saved to Cloud! ✅");
     } else {
-        let events = JSON.parse(localStorage.getItem('events_data') || "[]");
+        let events = safeGetLocal('events_data');
         events.push({ title, date: dateStr });
         localStorage.setItem('events_data', JSON.stringify(events));
         alert("Event saved Locally! ✅");
@@ -254,9 +268,9 @@ async function addEvent(dateStr) {
 // --- Backup Logic ---
 function downloadBackup() {
     const data = {
-        notes: JSON.parse(localStorage.getItem('notes_data') || "[]"),
-        todos: JSON.parse(localStorage.getItem('todos_data') || "[]"),
-        events: JSON.parse(localStorage.getItem('events_data') || "[]")
+        notes: safeGetLocal('notes_data'),
+        todos: safeGetLocal('todos_data'),
+        events: safeGetLocal('events_data')
     };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
     const downloadAnchorNode = document.createElement('a');
