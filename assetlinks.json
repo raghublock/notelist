@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.raghublock.twa",
+        "sha256_cert_fingerprints": ["EC:16:14:07:F0:E5:19:FF:D5:A9:94:79:B1:92:D2:93:CA:58:EB:50:CE:CD:A1:B3:AA:E9:4A:E8:7C:CD:4D:D1"]
+      }
+    }]
