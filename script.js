@@ -28,22 +28,19 @@ function changeView(viewType) {
     }
 }
 
-// 4. Auth State Handler (Sync & Restore)
+// 4. Auth State Handler
 auth.onAuthStateChanged((user) => {
     if (user) {
-        // Fix: Split array display issue solved
         let firstName = user.displayName ? user.displayName.split(' ')[0] : "User";
         document.getElementById('authSection').innerHTML = `
-            <span style="color:white; margin-right:10px;">Hi, ${firstName}</span>
+            <span style="color:var(--dark); margin-right:10px; font-weight:bold;">Hi, ${firstName}</span>
             <button onclick="auth.signOut().then(()=>location.reload())" class="btn" style="width:auto; padding:5px 10px; background:#e74c3c;">Logout</button>
         `;
     }
-    // Fix: Broken OR operator fixed
     setTheme(localStorage.getItem('user_theme') || 'default');
     changeView(localStorage.getItem('note_view') || 'grid');
     loadNotes();
-    // Note: loadTodos() function is called here but missing in your script. You might need to add it later!
-    if(typeof loadTodos === 'function') loadTodos(); 
+    loadTodos(); // Ab ye safely call hoga
 });
 
 // 5. Google Login
@@ -53,7 +50,7 @@ function googleLogin() {
        .catch((error) => console.error("Login Error: ", error));
 }
 
-// --- Navigation ---
+// --- Navigation (Screens proper work karne ke liye) ---
 function openScreen(screenId, btn) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
     document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
@@ -62,7 +59,7 @@ function openScreen(screenId, btn) {
     if(screenId === 'calendar') renderCalendar();
 }
 
-// --- Notepad Logic (Cloud Sync) ---
+// --- Notepad Logic ---
 function setNoteColor(color) {
     document.getElementById('noteText').style.backgroundColor = color;
 }
@@ -83,7 +80,6 @@ async function saveNote() {
     if (user) {
         await db.collection("users").doc(user.uid).collection("notes").add(note);
     } else {
-        // Fix: Broken OR operator and JSON syntax
         let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
         notes.unshift(note);
         localStorage.setItem('notes_data', JSON.stringify(notes));
@@ -96,22 +92,21 @@ async function saveNote() {
 
 async function loadNotes() {
     const container = document.getElementById('notesHistory');
-    if(!container) return; // safety check
+    if(!container) return; 
     
     const user = auth.currentUser;
-    let notes = []; // Fix: Syntax Error resolved
+    let notes = []; 
 
     if (user) {
         const snapshot = await db.collection("users").doc(user.uid).collection("notes").orderBy("timestamp", "desc").get();
         notes = snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
     } else {
-        // Fix: Broken OR operator and JSON syntax
         notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
     }
 
     container.innerHTML = notes.map((n, i) => `
         <div class="history-item card" style="background: ${n.color}">
-            <button class="del-btn" onclick="deleteNote('${user ? n.id : i}')">×</button>
+            <button class="del-btn" style="float:right; cursor:pointer;" onclick="deleteNote('${user ? n.id : i}')">×</button>
             <h4>${n.title}</h4>
             <small>${n.date}</small>
             <p>${n.text}</p>
@@ -125,13 +120,67 @@ async function deleteNote(id) {
         if (user) {
             await db.collection("users").doc(user.uid).collection("notes").doc(id).delete();
         } else {
-            // Fix: Broken OR operator and JSON syntax
             let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
             notes.splice(id, 1);
             localStorage.setItem('notes_data', JSON.stringify(notes));
         }
         loadNotes();
     }
+}
+
+// --- Checklist Logic (Newly Added) ---
+async function addTodo() {
+    const input = document.getElementById('todoInput');
+    const task = input.value;
+    const user = auth.currentUser;
+
+    if(!task) return;
+
+    if(user) {
+        await db.collection("users").doc(user.uid).collection("todos").add({
+            task, done: false, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } else {
+        let todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
+        todos.push({ task, done: false });
+        localStorage.setItem('todos_data', JSON.stringify(todos));
+    }
+    input.value = "";
+    loadTodos();
+}
+
+async function loadTodos() {
+    const list = document.getElementById('todoList');
+    if(!list) return;
+
+    const user = auth.currentUser;
+    let todos = [];
+
+    if(user) {
+        const snap = await db.collection("users").doc(user.uid).collection("todos").orderBy("timestamp").get();
+        todos = snap.docs.map(doc => ({...doc.data(), id: doc.id}));
+    } else {
+        todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
+    }
+
+    list.innerHTML = todos.map((t, i) => `
+        <div style="display:flex; align-items:center; margin:10px 0; padding:10px; background:#f9f9f9; border-radius:5px;">
+            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${user ? t.id : i}', ${!t.done})" style="margin-right:10px;">
+            <span style="flex:1; text-decoration: ${t.done ? 'line-through' : 'none'}">${t.task}</span>
+        </div>
+    `).join('');
+}
+
+async function toggleTodo(id, state) {
+    const user = auth.currentUser;
+    if(user) {
+        await db.collection("users").doc(user.uid).collection("todos").doc(id).update({done: state});
+    } else {
+        let todos = JSON.parse(localStorage.getItem('todos_data') || "[]");
+        todos[id].done = state;
+        localStorage.setItem('todos_data', JSON.stringify(todos));
+    }
+    loadTodos();
 }
 
 // --- Calendar Logic ---
@@ -153,7 +202,7 @@ async function renderCalendar() {
     const month = currentNavDate.getMonth();
     display.innerText = currentNavDate.toLocaleString('default', { month: 'long' }) + " " + year;
 
-    let events = []; // Fix: Syntax Error resolved
+    let events = []; 
     if (auth.currentUser) {
         const snap = await db.collection("users").doc(auth.currentUser.uid).collection("events").get();
         events = snap.docs.map(doc => doc.data().date);
