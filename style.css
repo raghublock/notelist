@@ -1,51 +1,208 @@
+/* 1. MODERN CSS RESET & FOUNDATIONS */
+*, *::before, *::after {
+    box-sizing: border-box; /* Normalizes the box model [3, 14] */
+}
+
 :root {
+    /* Default (Clean Green) Theme */
     --primary: #27ae60;
+    --primary-hover: #219150;
     --dark: #2c3e50;
     --bg: #f4f7f6;
     --white: #ffffff;
+    --text-main: #212121;
+    --border-color: #ddd;
     --shadow: 0 4px 15px rgba(0,0,0,0.1);
+    --line-color: #e0e0e0; /* For paper effect */
 }
 
-body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; }
+/* 2. THEMES - LIGHT BROWN & LIGHT PINK  */
+[data-theme="light-brown"] {
+    --bg: #f7efe6; /* Terracotta Petal base */
+    --primary: #6a3f2b;
+    --primary-hover: #b05a3c;
+    --text-main: #3a2a24;
+    --border-color: #d7ccc8;
+    --white: #fffcf9;
+    --line-color: #d8c3bc;
+}
 
-/* Auth Bar */
-.auth-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #fff; border-bottom: 1px solid #ddd; }
-.logo { font-size: 20px; font-weight: bold; color: var(--primary); }
-.google-btn { background: #4285F4; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-right: 5px; }
-.zoho-btn { background: #F0483E; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+[data-theme="light-pink"] {
+    --bg: #fce4ec; /* Sakura Pink base */
+    --primary: #880e4f;
+    --primary-hover: #c2185b;
+    --text-main: #2f201b;
+    --border-color: #f8bbd0;
+    --white: #fffafb;
+    --line-color: #f48fb1;
+}
 
-/* Navigation */
-.nav-tabs { display: flex; background: var(--dark); justify-content: center; position: sticky; top: 0; z-index: 1000; }
-.nav-tabs button { background: none; border: none; color: #ccc; padding: 15px 20px; cursor: pointer; font-size: 16px; transition: 0.3s; }
-.nav-tabs button.active { background: #34495e; border-bottom: 4px solid var(--primary); color: var(--primary); font-weight: bold; }
+body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; /* Professional stack [15, 16] */
+    background-color: var(--bg);
+    margin: 0;
+    color: var(--text-main);
+    line-height: 1.6;
+    transition: background-color 0.3s ease;
+}
 
-/* Screens & Cards */
-.screen { display: none; padding: 20px; max-width: 800px; margin: auto; animation: fadeIn 0.4s; }
+/* 3. AUTH & NAVIGATION [17, 18, 19] */
+.auth-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background: var(--white);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.logo { font-size: 22px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+
+.nav-tabs {
+    display: flex;
+    background: var(--dark);
+    justify-content: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-tabs button {
+    background: none;
+    border: none;
+    color: #ccc;
+    padding: 18px 30px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs button:hover { color: var(--white); }
+.nav-tabs button.active {
+    background: rgba(255,255,255,0.1);
+    color: var(--primary);
+    border-bottom: 4px solid var(--primary);
+}
+
+/* 4. CARDS & LAYOUT [20, 11] */
+.screen {
+    display: none;
+    padding: 30px 20px;
+    max-width: 900px;
+    margin: auto;
+    animation: fadeIn 0.4s ease-out;
+}
+
 .active-screen { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 20px; }
-h2 { margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
 
-input, textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
-.btn { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-.btn:hover { background: #219150; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
-/* Notepad History */
-.theme-dots { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
-.dot { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid #eee; }
-.history-item { background: white; border-left: 5px solid #2980b9; padding: 15px; margin-top: 10px; border-radius: 8px; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-.del-btn { position: absolute; top: 10px; right: 10px; color: #e74c3c; cursor: pointer; border: none; background: none; font-size: 18px; }
+.card {
+    background: var(--white);
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Lift effect [12] */
+}
 
-/* Checklist */
-.todo-item { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #eee; }
-.input-group { display: flex; gap: 5px; }
+.card:hover {
+    transform: translateY(-5px); /* Interaction Pop [11, 12] */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
 
-/* Calendar */
-.cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.nav-btn { background: var(--primary); color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
-.cal-date { padding: 15px 5px; background: #fff; border-radius: 8px; font-size: 14px; position: relative; cursor: pointer; transition: 0.2s; }
-.cal-date:hover { background: #eef; }
-.today { background: var(--primary) !important; color: white; font-weight: bold; }
-.event-dot { width: 6px; height: 6px; background: #e74c3c; border-radius: 50%; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); }
+h2 {
+    margin-top: 0;
+    font-weight: 700;
+    border-left: 6px solid var(--primary);
+    padding-left: 15px;
+    font-size: clamp(1.2rem, 1.1rem + 0.5vw, 1.5rem); /* Fluid font [21] */
+}
 
+/* 5. LINED PAPER EDITOR [8, 10] */
+textarea {
+    width: 100%;
+    height: 250px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 15px 20px;
+    font-size: 17px;
+    background-image: linear-gradient(var(--line-color) 1px, transparent 1px);
+    background-size: 100% 2rem; /* Matches line-height [8] */
+    line-height: 2rem;
+    resize: none;
+    background-attachment: local;
+}
+
+input[type="text"] {
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background: #f8f9fa;
+    transition: border-color 0.3s;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--white);
+}
+
+/* 6. BUTTONS & CONTROLS  */
+.btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 14px;
+    width: 100%;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background: var(--primary-hover);
+    filter: brightness(1.1);
+}
+
+input[type="checkbox"] { accent-color: var(--primary); } /* Custom brand ticks [3, 22] */
+
+/* 7. CALENDAR GRID [18, 19] */
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 2D control [17, 19] */
+    gap: 8px;
+    text-align: center;
+}
+
+.cal-date {
+    aspect-ratio: 1 / 1; /* Perfectly square days [19] */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.cal-date:hover { background: var(--bg); }
+.today { background: var(--primary)!important; color: white; font-weight: bold; }
+
+/* 8. VIEWS (NOTEPAD LISTS) */
+.history-item {
+    background: var(--white);
+    border-left: 5px solid var(--primary);
+    padding: 20px;
+    margin-top: 15px;
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
