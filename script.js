@@ -14,7 +14,30 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// --- 🛠️ SAFE PARSE FUNCTION (Corrupted Data auto-fix karega) ---
+// --- 🔐 ENCRYPTION LOGIC ---
+const SECRET_KEY = "BhatiTools_Super_Secret_Key_2026"; // Ye key kabhi kisi ko mat batana
+
+function encryptData(text) {
+    if(!text) return "";
+    return CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
+}
+
+function decryptData(ciphertext) {
+    if(!ciphertext) return "";
+    try {
+        const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
+        const originalText = bytes.toString(CryptoJS.enc.Utf8);
+        
+        // Agar data pehle se bina encryption ke save hai, toh purana data wapas bhej do
+        if(!originalText) return ciphertext; 
+        return originalText;
+    } catch (e) {
+        // Agar decrypt nahi ho paaya (purana unencrypted data), toh jaisa hai waisa dikhao
+        return ciphertext; 
+    }
+}
+
+// --- 🛠️ SAFE PARSE FUNCTION ---
 function safeGetLocal(key) {
     try {
         let data = localStorage.getItem(key);
@@ -86,8 +109,12 @@ async function saveNote() {
 
     if(!title || !text) return alert("Heading aur content bharein!");
 
+    // 🔐 Encrypting Title and Text
     const note = { 
-        title, text, date: new Date().toLocaleString(), color,
+        title: encryptData(title), 
+        text: encryptData(text), 
+        date: new Date().toLocaleString(), 
+        color,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -119,11 +146,11 @@ async function loadNotes() {
     }
 
     container.innerHTML = notes.map((n, i) => `
-        <div class="history-item card" style="background: ${n.color}">
-            <button class="del-btn" style="float:right; cursor:pointer; font-size: 18px; color: red; background: none; border: none;" onclick="deleteNote('${user ? n.id : i}')">✖</button>
-            <h4>${n.title}</h4>
+        <div class="history-item card" style="background: ${n.color}" onclick="this.classList.toggle('expanded')">
+            <button class="del-btn" style="float:right; cursor:pointer; font-size: 18px; color: red; background: none; border: none;" onclick="event.stopPropagation(); deleteNote('${user ? n.id : i}')">✖</button>
+            <h4>${decryptData(n.title)}</h4>
             <small>${n.date}</small>
-            <p>${n.text}</p>
+            <p>${decryptData(n.text)}</p>
         </div>
     `).join('');
 }
@@ -150,13 +177,14 @@ async function addTodo() {
 
     if(!task) return;
 
+    // 🔐 Encrypting Task
     if(user) {
         await db.collection("users").doc(user.uid).collection("todos").add({
-            task, done: false, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            task: encryptData(task), done: false, timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
     } else {
         let todos = safeGetLocal('todos_data');
-        todos.push({ task, done: false });
+        todos.push({ task: encryptData(task), done: false });
         localStorage.setItem('todos_data', JSON.stringify(todos));
     }
     input.value = "";
@@ -180,7 +208,7 @@ async function loadTodos() {
     list.innerHTML = todos.map((t, i) => `
         <div style="display:flex; align-items:center; margin:10px 0; padding:10px; background:#f9f9f9; border-radius:5px;">
             <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${user ? t.id : i}', ${!t.done})" style="margin-right:10px; width: 20px; height: 20px;">
-            <span style="flex:1; font-size: 16px; text-decoration: ${t.done ? 'line-through' : 'none'}">${t.task}</span>
+            <span style="flex:1; font-size: 16px; text-decoration: ${t.done ? 'line-through' : 'none'}">${decryptData(t.task)}</span>
         </div>
     `).join('');
 }
@@ -257,23 +285,22 @@ async function addEvent(dateStr) {
     if (auth.currentUser) {
         const snap = await db.collection("users").doc(auth.currentUser.uid).collection("events").where("date", "==", dateStr).get();
         if (!snap.empty) {
-            existingEventTitle = snap.docs[0].data().title;
+            existingEventTitle = decryptData(snap.docs[0].data().title);
             existingDocId = snap.docs[0].id;
         }
     } else {
         let events = safeGetLocal('events_data');
         let ev = events.find(e => e.date === dateStr);
-        if (ev) existingEventTitle = ev.title;
+        if (ev) existingEventTitle = decryptData(ev.title);
     }
 
-    // 2. User ko prompt dikhao (Agar purana event hai, toh text box mein pehle se likha aayega)
+    // 2. User ko prompt dikhao
     const title = prompt(`Event for ${dateStr} (Khali chhodne par delete ho jayega):`, existingEventTitle);
     
-    if (title === null) return; // Agar user ne Cancel dabaya toh kuch mat karo
+    if (title === null) return; 
 
     // 3. Save, Update ya Delete logic
     if (title.trim() === "") {
-        // Agar user ne text delete kar diya, toh event ko hamesha ke liye mita do
         if (auth.currentUser && existingDocId) {
             await db.collection("users").doc(auth.currentUser.uid).collection("events").doc(existingDocId).delete();
         } else {
@@ -283,18 +310,20 @@ async function addEvent(dateStr) {
         }
         alert("Event Deleted! 🗑️");
     } else {
-        // Agar naya text likha hai, toh Save/Update karo
+        // 🔐 Encrypting Event Title
+        let encryptedTitle = encryptData(title);
+        
         if (auth.currentUser) {
             if (existingDocId) {
-                await db.collection("users").doc(auth.currentUser.uid).collection("events").doc(existingDocId).update({ title });
+                await db.collection("users").doc(auth.currentUser.uid).collection("events").doc(existingDocId).update({ title: encryptedTitle });
             } else {
-                await db.collection("users").doc(auth.currentUser.uid).collection("events").add({ title, date: dateStr });
+                await db.collection("users").doc(auth.currentUser.uid).collection("events").add({ title: encryptedTitle, date: dateStr });
             }
         } else {
             let events = safeGetLocal('events_data');
             let idx = events.findIndex(e => e.date === dateStr);
-            if (idx > -1) events[idx].title = title; // Purana update
-            else events.push({ title, date: dateStr }); // Naya save
+            if (idx > -1) events[idx].title = encryptedTitle; 
+            else events.push({ title: encryptedTitle, date: dateStr }); 
             localStorage.setItem('events_data', JSON.stringify(events));
         }
         alert("Event Saved Successfully! ✅");
@@ -322,4 +351,3 @@ function downloadBackup() {
 window.onload = () => {
     renderCalendar();
 };
-
