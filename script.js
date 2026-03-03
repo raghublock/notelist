@@ -191,6 +191,7 @@ async function addTodo() {
     loadTodos();
 }
 
+// --- 1. Load Todos (Isme Delete button ✖ add kiya gaya hai) ---
 async function loadTodos() {
     const list = document.getElementById('todoList');
     if(!list) return;
@@ -206,13 +207,29 @@ async function loadTodos() {
     }
 
     list.innerHTML = todos.map((t, i) => `
-        <div style="display:flex; align-items:center; margin:10px 0; padding:10px; background:#f9f9f9; border-radius:5px;">
-            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${user ? t.id : i}', ${!t.done})" style="margin-right:10px; width: 20px; height: 20px;">
-            <span style="flex:1; font-size: 16px; text-decoration: ${t.done ? 'line-through' : 'none'}">${decryptData(t.task)}</span>
+        <div class="todo-item">
+            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${user ? t.id : i}', ${!t.done})" style="margin-right:15px; width: 22px; height: 22px; cursor:pointer;">
+            <span style="flex:1; font-size: 16px; text-decoration: ${t.done ? 'line-through' : 'none'}; color: ${t.done ? '#888' : '#000'}">${decryptData(t.task)}</span>
+            
+            <button onclick="deleteTodo('${user ? t.id : i}')" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:20px; padding: 0 5px;">✖</button>
         </div>
     `).join('');
 }
 
+// --- 2. Naya Delete Todo Function ---
+async function deleteTodo(id) {
+    const user = auth.currentUser;
+    if(confirm("Kya aap is task ko delete karna chahte hain?")) {
+        if(user) {
+            await db.collection("users").doc(user.uid).collection("todos").doc(id).delete();
+        } else {
+            let todos = safeGetLocal('todos_data');
+            todos.splice(id, 1);
+            localStorage.setItem('todos_data', JSON.stringify(todos));
+        }
+        loadTodos(); // Delete hone ke baad list refresh karega
+    }
+}
 async function toggleTodo(id, state) {
     const user = auth.currentUser;
     if(user) {
@@ -351,3 +368,4 @@ function downloadBackup() {
 window.onload = () => {
     renderCalendar();
 };
+
