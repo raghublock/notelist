@@ -1,4 +1,4 @@
-// 1. Firebase Configuration (Aapki unchanged API Details)
+// 1. Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyD8qNYHMhbH2CyAu8DCEJr3AcBz2MQbhx0",
     authDomain: "notelist-dfae8.firebaseapp.com",
@@ -31,20 +31,19 @@ function changeView(viewType) {
 // 4. Auth State Handler (Sync & Restore)
 auth.onAuthStateChanged((user) => {
     if (user) {
+        // Fix: Split array display issue solved
+        let firstName = user.displayName ? user.displayName.split(' ')[0] : "User";
         document.getElementById('authSection').innerHTML = `
-            <span style="color:white; margin-right:10px;">Hi, ${user.displayName.split(' ')}</span>
+            <span style="color:white; margin-right:10px;">Hi, ${firstName}</span>
             <button onclick="auth.signOut().then(()=>location.reload())" class="btn" style="width:auto; padding:5px 10px; background:#e74c3c;">Logout</button>
         `;
     }
-    // Saved preferences load karein
-    setTheme(localStorage.getItem('user_theme') |
-
-| 'default');
-    changeView(localStorage.getItem('note_view') |
-
-| 'grid');
+    // Fix: Broken OR operator fixed
+    setTheme(localStorage.getItem('user_theme') || 'default');
+    changeView(localStorage.getItem('note_view') || 'grid');
     loadNotes();
-    loadTodos();
+    // Note: loadTodos() function is called here but missing in your script. You might need to add it later!
+    if(typeof loadTodos === 'function') loadTodos(); 
 });
 
 // 5. Google Login
@@ -71,12 +70,10 @@ function setNoteColor(color) {
 async function saveNote() {
     const title = document.getElementById('noteTitle').value;
     const text = document.getElementById('noteText').value;
-    const color = document.getElementById('noteText').style.backgroundColor |
-
-| '#fff';
+    const color = document.getElementById('noteText').style.backgroundColor || '#fff';
     const user = auth.currentUser;
 
-    if(!title ||!text) return alert("Heading aur content bharein!");
+    if(!title || !text) return alert("Heading aur content bharein!");
 
     const note = { 
         title, text, date: new Date().toLocaleString(), color,
@@ -86,9 +83,8 @@ async function saveNote() {
     if (user) {
         await db.collection("users").doc(user.uid).collection("notes").add(note);
     } else {
-        let notes = JSON.parse(localStorage.getItem('notes_data') |
-
-| "");
+        // Fix: Broken OR operator and JSON syntax
+        let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
         notes.unshift(note);
         localStorage.setItem('notes_data', JSON.stringify(notes));
     }
@@ -100,21 +96,22 @@ async function saveNote() {
 
 async function loadNotes() {
     const container = document.getElementById('notesHistory');
+    if(!container) return; // safety check
+    
     const user = auth.currentUser;
-    let notes =;
+    let notes = []; // Fix: Syntax Error resolved
 
     if (user) {
         const snapshot = await db.collection("users").doc(user.uid).collection("notes").orderBy("timestamp", "desc").get();
         notes = snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
     } else {
-        notes = JSON.parse(localStorage.getItem('notes_data') |
-
-| "");
+        // Fix: Broken OR operator and JSON syntax
+        notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
     }
 
     container.innerHTML = notes.map((n, i) => `
         <div class="history-item card" style="background: ${n.color}">
-            <button class="del-btn" onclick="deleteNote('${user? n.id : i}')">×</button>
+            <button class="del-btn" onclick="deleteNote('${user ? n.id : i}')">×</button>
             <h4>${n.title}</h4>
             <small>${n.date}</small>
             <p>${n.text}</p>
@@ -124,19 +121,20 @@ async function loadNotes() {
 
 async function deleteNote(id) {
     const user = auth.currentUser;
-    if (user && confirm("Kya aap note delete karna chahte hain?")) {
-        await db.collection("users").doc(user.uid).collection("notes").doc(id).delete();
-    } else {
-        let notes = JSON.parse(localStorage.getItem('notes_data') |
-
-| "");
-        notes.splice(id, 1);
-        localStorage.setItem('notes_data', JSON.stringify(notes));
+    if (confirm("Kya aap note delete karna chahte hain?")) {
+        if (user) {
+            await db.collection("users").doc(user.uid).collection("notes").doc(id).delete();
+        } else {
+            // Fix: Broken OR operator and JSON syntax
+            let notes = JSON.parse(localStorage.getItem('notes_data') || "[]");
+            notes.splice(id, 1);
+            localStorage.setItem('notes_data', JSON.stringify(notes));
+        }
+        loadNotes();
     }
-    loadNotes();
 }
 
-// --- Calendar Logic (Click to Add Event) [5, 6] ---
+// --- Calendar Logic ---
 let currentNavDate = new Date();
 
 function changeMonth(val) {
@@ -147,13 +145,15 @@ function changeMonth(val) {
 async function renderCalendar() {
     const grid = document.getElementById('calGrid');
     const display = document.getElementById('monthDisplay');
+    if(!grid || !display) return;
+
     grid.querySelectorAll('.cal-date').forEach(el => el.remove());
 
     const year = currentNavDate.getFullYear();
     const month = currentNavDate.getMonth();
     display.innerText = currentNavDate.toLocaleString('default', { month: 'long' }) + " " + year;
 
-    let events =;
+    let events = []; // Fix: Syntax Error resolved
     if (auth.currentUser) {
         const snap = await db.collection("users").doc(auth.currentUser.uid).collection("events").get();
         events = snap.docs.map(doc => doc.data().date);
@@ -175,7 +175,7 @@ async function renderCalendar() {
         const isToday = (d === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear());
         
         const dayDiv = document.createElement('div');
-        dayDiv.className = `cal-date ${isToday? 'today' : ''} ${hasEvent? 'has-event' : ''}`;
+        dayDiv.className = `cal-date ${isToday ? 'today' : ''} ${hasEvent ? 'has-event' : ''}`;
         dayDiv.innerText = d;
         dayDiv.onclick = () => addEvent(dateStr);
         grid.appendChild(dayDiv);
