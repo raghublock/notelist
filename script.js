@@ -40,7 +40,7 @@ auth.onAuthStateChanged((user) => {
     setTheme(localStorage.getItem('user_theme') || 'default');
     changeView(localStorage.getItem('note_view') || 'grid');
     loadNotes();
-    loadTodos(); // Ab ye safely call hoga
+    loadTodos();
 });
 
 // 5. Google Login
@@ -50,7 +50,7 @@ function googleLogin() {
        .catch((error) => console.error("Login Error: ", error));
 }
 
-// --- Navigation (Screens proper work karne ke liye) ---
+// --- Navigation ---
 function openScreen(screenId, btn) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
     document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
@@ -106,7 +106,7 @@ async function loadNotes() {
 
     container.innerHTML = notes.map((n, i) => `
         <div class="history-item card" style="background: ${n.color}">
-            <button class="del-btn" style="float:right; cursor:pointer;" onclick="deleteNote('${user ? n.id : i}')">×</button>
+            <button class="del-btn" style="float:right; cursor:pointer; font-size: 18px; color: red; background: none; border: none;" onclick="deleteNote('${user ? n.id : i}')">✖</button>
             <h4>${n.title}</h4>
             <small>${n.date}</small>
             <p>${n.text}</p>
@@ -128,7 +128,7 @@ async function deleteNote(id) {
     }
 }
 
-// --- Checklist Logic (Newly Added) ---
+// --- Checklist Logic ---
 async function addTodo() {
     const input = document.getElementById('todoInput');
     const task = input.value;
@@ -165,8 +165,8 @@ async function loadTodos() {
 
     list.innerHTML = todos.map((t, i) => `
         <div style="display:flex; align-items:center; margin:10px 0; padding:10px; background:#f9f9f9; border-radius:5px;">
-            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${user ? t.id : i}', ${!t.done})" style="margin-right:10px;">
-            <span style="flex:1; text-decoration: ${t.done ? 'line-through' : 'none'}">${t.task}</span>
+            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${user ? t.id : i}', ${!t.done})" style="margin-right:10px; width: 20px; height: 20px;">
+            <span style="flex:1; font-size: 16px; text-decoration: ${t.done ? 'line-through' : 'none'}">${t.task}</span>
         </div>
     `).join('');
 }
@@ -207,7 +207,6 @@ async function renderCalendar() {
         const snap = await db.collection("users").doc(auth.currentUser.uid).collection("events").get();
         events = snap.docs.map(doc => doc.data().date);
     } else {
-        // Bina login local storage check karega
         let localEvents = JSON.parse(localStorage.getItem('events_data') || "[]");
         events = localEvents.map(e => e.date);
     }
@@ -229,7 +228,7 @@ async function renderCalendar() {
         
         const dayDiv = document.createElement('div');
         dayDiv.className = `cal-date ${isToday ? 'today' : ''} ${hasEvent ? 'has-event' : ''}`;
-        if(hasEvent) dayDiv.style.border = "2px solid var(--primary)"; // Event highlight
+        if(hasEvent) dayDiv.style.border = "2px solid var(--primary)";
         dayDiv.innerText = d;
         dayDiv.onclick = () => addEvent(dateStr);
         grid.appendChild(dayDiv);
@@ -244,7 +243,6 @@ async function addEvent(dateStr) {
         await db.collection("users").doc(auth.currentUser.uid).collection("events").add({ title, date: dateStr });
         alert("Event saved to Cloud! ✅");
     } else {
-        // Bina login save karega
         let events = JSON.parse(localStorage.getItem('events_data') || "[]");
         events.push({ title, date: dateStr });
         localStorage.setItem('events_data', JSON.stringify(events));
@@ -253,46 +251,6 @@ async function addEvent(dateStr) {
     renderCalendar();
 }
 
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    for (let i = 0; i < firstDay; i++) {
-        const empty = document.createElement('div');
-        empty.className = "cal-date";
-        empty.style.background = "transparent";
-        grid.appendChild(empty);
-    }
-
-    for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const hasEvent = events.includes(dateStr);
-        const isToday = (d === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear());
-        
-        const dayDiv = document.createElement('div');
-        dayDiv.className = `cal-date ${isToday ? 'today' : ''} ${hasEvent ? 'has-event' : ''}`;
-        dayDiv.innerText = d;
-        dayDiv.onclick = () => addEvent(dateStr);
-        grid.appendChild(dayDiv);
-    }
-}
-
-async function addEvent(dateStr) {
-    const title = prompt(`Enter event for ${dateStr}:`);
-    if(!title) return;
-    
-    if (auth.currentUser) {
-        await db.collection("users").doc(auth.currentUser.uid).collection("events").add({ title, date: dateStr });
-        alert("Event saved to Cloud! ✅");
-    } else {
-        alert("Pehle login karein cloud par save karne ke liye!");
-    }
-    renderCalendar();
-}
-
-// Initial Run
-window.onload = () => {
-    renderCalendar();
-};
 // --- Backup Logic ---
 function downloadBackup() {
     const data = {
@@ -309,3 +267,7 @@ function downloadBackup() {
     downloadAnchorNode.remove();
 }
 
+// Initial Run
+window.onload = () => {
+    renderCalendar();
+};
