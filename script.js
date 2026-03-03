@@ -206,7 +206,52 @@ async function renderCalendar() {
     if (auth.currentUser) {
         const snap = await db.collection("users").doc(auth.currentUser.uid).collection("events").get();
         events = snap.docs.map(doc => doc.data().date);
+    } else {
+        // Bina login local storage check karega
+        let localEvents = JSON.parse(localStorage.getItem('events_data') || "[]");
+        events = localEvents.map(e => e.date);
     }
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = "cal-date";
+        empty.style.background = "transparent";
+        grid.appendChild(empty);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const hasEvent = events.includes(dateStr);
+        const isToday = (d === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear());
+        
+        const dayDiv = document.createElement('div');
+        dayDiv.className = `cal-date ${isToday ? 'today' : ''} ${hasEvent ? 'has-event' : ''}`;
+        if(hasEvent) dayDiv.style.border = "2px solid var(--primary)"; // Event highlight
+        dayDiv.innerText = d;
+        dayDiv.onclick = () => addEvent(dateStr);
+        grid.appendChild(dayDiv);
+    }
+}
+
+async function addEvent(dateStr) {
+    const title = prompt(`Enter event for ${dateStr}:`);
+    if(!title) return;
+    
+    if (auth.currentUser) {
+        await db.collection("users").doc(auth.currentUser.uid).collection("events").add({ title, date: dateStr });
+        alert("Event saved to Cloud! ✅");
+    } else {
+        // Bina login save karega
+        let events = JSON.parse(localStorage.getItem('events_data') || "[]");
+        events.push({ title, date: dateStr });
+        localStorage.setItem('events_data', JSON.stringify(events));
+        alert("Event saved Locally! ✅");
+    }
+    renderCalendar();
+}
 
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -248,3 +293,19 @@ async function addEvent(dateStr) {
 window.onload = () => {
     renderCalendar();
 };
+// --- Backup Logic ---
+function downloadBackup() {
+    const data = {
+        notes: JSON.parse(localStorage.getItem('notes_data') || "[]"),
+        todos: JSON.parse(localStorage.getItem('todos_data') || "[]"),
+        events: JSON.parse(localStorage.getItem('events_data') || "[]")
+    };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "BhatiTools_Backup.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
