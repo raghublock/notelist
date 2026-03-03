@@ -250,17 +250,54 @@ async function renderCalendar() {
 }
 
 async function addEvent(dateStr) {
-    const title = prompt(`Enter event for ${dateStr}:`);
-    if(!title) return;
+    let existingEventTitle = "";
+    let existingDocId = null;
     
+    // 1. Pehle check karo ki is date par koi event already save hai ya nahi
     if (auth.currentUser) {
-        await db.collection("users").doc(auth.currentUser.uid).collection("events").add({ title, date: dateStr });
-        alert("Event saved to Cloud! ✅");
+        const snap = await db.collection("users").doc(auth.currentUser.uid).collection("events").where("date", "==", dateStr).get();
+        if (!snap.empty) {
+            existingEventTitle = snap.docs[0].data().title;
+            existingDocId = snap.docs[0].id;
+        }
     } else {
         let events = safeGetLocal('events_data');
-        events.push({ title, date: dateStr });
-        localStorage.setItem('events_data', JSON.stringify(events));
-        alert("Event saved Locally! ✅");
+        let ev = events.find(e => e.date === dateStr);
+        if (ev) existingEventTitle = ev.title;
+    }
+
+    // 2. User ko prompt dikhao (Agar purana event hai, toh text box mein pehle se likha aayega)
+    const title = prompt(`Event for ${dateStr} (Khali chhodne par delete ho jayega):`, existingEventTitle);
+    
+    if (title === null) return; // Agar user ne Cancel dabaya toh kuch mat karo
+
+    // 3. Save, Update ya Delete logic
+    if (title.trim() === "") {
+        // Agar user ne text delete kar diya, toh event ko hamesha ke liye mita do
+        if (auth.currentUser && existingDocId) {
+            await db.collection("users").doc(auth.currentUser.uid).collection("events").doc(existingDocId).delete();
+        } else {
+            let events = safeGetLocal('events_data');
+            events = events.filter(e => e.date !== dateStr);
+            localStorage.setItem('events_data', JSON.stringify(events));
+        }
+        alert("Event Deleted! 🗑️");
+    } else {
+        // Agar naya text likha hai, toh Save/Update karo
+        if (auth.currentUser) {
+            if (existingDocId) {
+                await db.collection("users").doc(auth.currentUser.uid).collection("events").doc(existingDocId).update({ title });
+            } else {
+                await db.collection("users").doc(auth.currentUser.uid).collection("events").add({ title, date: dateStr });
+            }
+        } else {
+            let events = safeGetLocal('events_data');
+            let idx = events.findIndex(e => e.date === dateStr);
+            if (idx > -1) events[idx].title = title; // Purana update
+            else events.push({ title, date: dateStr }); // Naya save
+            localStorage.setItem('events_data', JSON.stringify(events));
+        }
+        alert("Event Saved Successfully! ✅");
     }
     renderCalendar();
 }
@@ -285,3 +322,4 @@ function downloadBackup() {
 window.onload = () => {
     renderCalendar();
 };
+
